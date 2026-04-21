@@ -1,0 +1,58 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 40px auto; padding: 0 20px; font-family: 'Inter', sans-serif;">
+    <a href="{% url 'marketplace' %}" style="text-decoration: none; color: #666; font-size: 14px;">← Назад к поиску</a>
+
+    <div style="background: white; border-radius: 24px; padding: 40px; margin-top: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
+        <img src="{{ blogger.avatar_url }}" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; box-shadow: 0 8px 20px rgba(0,0,0,0.1);">
+        
+        <div style="flex: 1;">
+            <h1 style="margin: 0; font-size: 32px; font-weight: 800;">{{ blogger.channel_name }}</h1>
+            <a href="{{ blogger.channel_link }}" target="_blank" style="color: #007bff; text-decoration: none; display: flex; align-items: center; gap: 5px; margin-top: 5px;">
+                🔗 Перейти на канал <small>↗</small>
+            </a>
+            
+            <div style="display: flex; gap: 20px; margin-top: 20px;">
+                <div><b style="font-size: 18px;">{{ blogger.subs_count }}</b> <span style="color: #666; font-size: 14px;">подписчиков</span></div>
+                <div><b style="font-size: 18px;">{{ blogger.avg_views }}</b> <span style="color: #666; font-size: 14px;">ср. просмотров</span></div>
+            </div>
+        </div>
+
+        <a href="{% url 'chat_with_blogger' blogger.id %}" style="background: #28a745; color: white; padding: 15px 30px; border-radius: 16px; text-decoration: none; font-weight: bold; font-size: 16px; box-shadow: 0 10px 20px rgba(40,167,69,0.2);">
+            💬 Написать сообщение
+        </a>
+    </div>
+
+    <div style="margin-top: 30px; background: white; border-radius: 24px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.05);">
+        <h3 style="margin-bottom: 20px; font-size: 20px;">📊 Прайс-лист на услуги</h3>
+        
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 2px solid #f0f2f5;">
+                    <th style="padding: 15px 10px; color: #888; font-weight: 500;">Формат размещения</th>
+                    <th style="padding: 15px 10px; color: #888; font-weight: 500;">Охват (прогноз)</th>
+                    <th style="padding: 15px 10px; color: #888; font-weight: 500; text-align: right;">Стоимость</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="border-bottom: 1px solid #f0f2f5;">
+                    <td style="padding: 20px 10px;"><b>YouTube Shorts / Reels</b></td>
+                    <td style="padding: 20px 10px;"><span style="background: #e3f2fd; color: #0d47a1; padding: 4px 8px; border-radius: 6px; font-size: 12px;">50k - 100k</span></td>
+                    <td style="padding: 20px 10px; text-align: right; font-weight: bold; font-size: 18px;">15,000 ₽</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f0f2f5;">
+                    <td style="padding: 20px 10px;"><b>Интеграция (Long video)</b></td>
+                    <td style="padding: 20px 10px;"><span style="background: #e3f2fd; color: #0d47a1; padding: 4px 8px; border-radius: 6px; font-size: 12px;">20k - 40k</span></td>
+                    <td style="padding: 20px 10px; text-align: right; font-weight: bold; font-size: 18px;">45,000 ₽</td>
+                </tr>
+                <tr>
+                    <td style="padding: 20px 10px;"><b>Пост в Telegram</b></td>
+                    <td style="padding: 20px 10px;"><span style="background: #e3f2fd; color: #0d47a1; padding: 4px 8px; border-radius: 6px; font-size: 12px;">5k - 8k</span></td>
+                    <td style="padding: 20px 10px; text-align: right; font-weight: bold; font-size: 18px;">8,000 ₽</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

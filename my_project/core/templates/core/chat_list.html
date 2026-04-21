@@ -1,0 +1,38 @@
+{% extends "core/base.html" %}
+
+{% block title %}Мои переписки{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 40px auto; font-family: sans-serif;">
+    <h2 style="margin-bottom: 30px;">Ваши сообщения</h2>
+    
+    <div style="background: white; border: 1px solid #ddd; border-radius: 12px; overflow: hidden;">
+        {% for other_user, last_msg in chats.items %}
+            <a href="{% url 'chat_detail' other_user.id %}" style="display: flex; align-items: center; padding: 20px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; transition: background 0.2s;">
+                
+                <div style="width: 50px; height: 50px; background: #007bff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px;">
+                    {{ other_user.username|slice:":1"|upper }}
+                </div>
+
+                <div style="flex-grow: 1;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <strong>{{ other_user.username }}</strong>
+                        <span style="font-size: 12px; color: #999;">{{ last_msg.created_at|date:"H:i" }}</span>
+                    </div>
+                    <p style="margin: 5px 0 0; font-size: 14px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 500px;">
+                        {% if last_msg.sender == user %}Вы: {% endif %}{{ last_msg.text }}
+                    </p>
+                </div>
+
+                {% if not last_msg.is_read and last_msg.receiver == user %}
+                    <div style="width: 10px; height: 10px; background: #007bff; border-radius: 50%; margin-left: 10px;"></div>
+                {% endif %}
+            </a>
+        {% empty %}
+            <div style="padding: 40px; text-align: center; color: #999;">
+                У вас пока нет активных диалогов.
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

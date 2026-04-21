@@ -1,0 +1,200 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<style>
+    :root {
+        --primary: #2563eb;
+        --border-color: #e2e8f0;
+        --bg-readonly: #f1f5f9;
+    }
+
+    /* Глобальный сброс для этой страницы, чтобы поля не вылезали */
+    .dashboard-container * {
+        box-sizing: border-box;
+    }
+
+    .dashboard-container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 15px;
+        font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    .content-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        padding: clamp(15px, 5%, 30px); /* Адаптивные отступы внутри карточки */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .section-title {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #94a3b8;
+        margin: 25px 0 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-title::after {
+        content: ""; height: 1px; background: #f1f5f9; flex: 1;
+    }
+
+    /* Сетка, которая никогда не ломается */
+    .grid-layout {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        width: 100%; /* Гарантируем, что сетка не шире родителя */
+    }
+
+    .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0; /* Важно для предотвращения распирания flex-элементов */
+    }
+
+    label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #475569;
+    }
+
+    input {
+        width: 100%; /* Теперь всегда занимает 100% своей ячейки */
+        padding: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 15px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    input:focus:not([readonly]) {
+        border-color: var(--primary);
+    }
+
+    input[readonly] {
+        background: var(--bg-readonly);
+        color: #64748b;
+        cursor: not-allowed;
+        border-color: #e2e8f0;
+    }
+
+    /* Карточки прайса */
+    .price-item {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+    .price-item.special {
+        background: #fffaf5;
+        border-color: #fed7aa;
+    }
+
+    .cpv-text {
+        margin-top: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #10b981;
+    }
+
+    .special .cpv-text { color: #f97316; }
+
+    .save-btn {
+        width: 100%;
+        margin-top: 30px;
+        background: var(--primary);
+        color: white;
+        padding: 16px;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.1s, background 0.2s;
+    }
+
+    .save-btn:hover { background: #1d4ed8; }
+    .save-btn:active { transform: scale(0.99); }
+</style>
+
+<div class="dashboard-container">
+    <h2 style="margin-bottom: 20px;">Настройка прайса</h2>
+
+    <form method="post" class="content-card">
+        {% csrf_token %}
+
+        <div class="section-title">Канал и Охваты</div>
+        <div class="grid-layout">
+            <div class="field-group">
+                <label>Название</label>
+                <input type="text" value="{{ profile.channel_name }}" readonly>
+            </div>
+            <div class="field-group">
+                <label>Медиана Long</label>
+                <input type="number" id="ml" value="{{ profile.median_views }}" readonly>
+            </div>
+            <div class="field-group">
+                <label>Медиана Shorts</label>
+                <input type="number" id="ms" value="{{ profile.median_views_shorts }}" readonly>
+            </div>
+        </div>
+
+        <div class="section-title">Стоимость услуг</div>
+        <div class="grid-layout">
+            <div class="price-item">
+                <label>Начало ролика</label>
+                <input type="number" id="p_start" name="price_start" value="{{ profile.price_start|default:0 }}" oninput="calcAllCPV()">
+                <div class="cpv-text">CPV: <span id="cpv_start">0</span> ₽</div>
+            </div>
+
+            <div class="price-item">
+                <label>Середина</label>
+                <input type="number" id="p_mid" name="price_middle" value="{{ profile.price_middle|default:0 }}" oninput="calcAllCPV()">
+                <div class="cpv-text">CPV: <span id="cpv_mid">0</span> ₽</div>
+            </div>
+
+            <div class="price-item">
+                <label>Конец ролика</label>
+                <input type="number" id="p_end" name="price_end" value="{{ profile.price_end|default:0 }}" oninput="calcAllCPV()">
+                <div class="cpv-text">CPV: <span id="cpv_end">0</span> ₽</div>
+            </div>
+
+            <div class="price-item special">
+                <label style="color: #c2410c;">YouTube Shorts</label>
+                <input type="number" id="p_shorts" name="price_shorts" value="{{ profile.price_shorts|default:0 }}" oninput="calcAllCPV()">
+                <div class="cpv-text">CPV: <span id="cpv_shorts_val">0</span> ₽</div>
+            </div>
+        </div>
+
+        <button type="submit" class="save-btn">Обновить прайс-лист</button>
+    </form>
+</div>
+
+<script>
+function calcAllCPV() {
+    const ml = parseFloat(document.getElementById('ml').value) || 0;
+    const ms = parseFloat(document.getElementById('ms').value) || 0;
+    
+    const ids = {
+        'cpv_start': [document.getElementById('p_start').value, ml],
+        'cpv_mid': [document.getElementById('p_mid').value, ml],
+        'cpv_end': [document.getElementById('p_end').value, ml],
+        'cpv_shorts_val': [document.getElementById('p_shorts').value, ms]
+    };
+
+    for (let id in ids) {
+        const [p, v] = ids[id];
+        document.getElementById(id).innerText = v > 0 ? (p / v).toFixed(2) : '0';
+    }
+}
+window.onload = calcAllCPV;
+</script>
+{% endblock %}

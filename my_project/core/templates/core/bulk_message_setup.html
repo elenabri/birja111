@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Массовая рассылка по товарам</h2>
+<form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label>Текст сообщения:</label>
+        <textarea name="message" class="form-control" rows="5" placeholder="Введите текст для всех владельцев товаров..."></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Запустить рассылку</button>
+</form>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 40px auto; font-family: 'Inter', sans-serif;">
+    <h1 style="font-weight: 800; color: #1a1a1a; margin-bottom: 30px;">Мои Интеграции</h1>
+
+    {% for contract in contracts %}
+    <div style="background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 30px; overflow: hidden; border: 1px solid #eee;">
+        
+        <div style="padding: 20px 30px; background: #fcfcfc; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #888;">Договор</span>
+                <h2 style="margin: 5px 0 0 0; font-size: 18px;">№{{ contract.number }} — {{ contract.blogger.username }}</h2>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-weight: 700; color: #28a745; font-size: 18px;">{{ contract.total_amount }} ₽</div>
+                <div style="font-size: 12px; color: #666;">
+                    Статус: 
+                    <span style="padding: 4px 12px; border-radius: 20px; background: #e3f2fd; color: #0d47a1; font-weight: 600;">
+                        {{ contract.get_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div style="padding: 30px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                {% for video in contract.videos.all %}
+                <div style="border: 1px solid #f0f0f0; border-radius: 15px; padding: 20px; position: relative; background: {% if video.status == 'released' %}#fafffa{% else %}white{% endif %};">
+                    
+                    <div style="position: absolute; top: 15px; right: 15px; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 10px; 
+                        {% if video.status == 'in_progress' %} background: #fff3e0; color: #e65100;
+                        {% elif video.status == 'review' %} background: #ede7f6; color: #512da8;
+                        {% elif video.status == 'released' %} background: #e8f5e9; color: #2e7d32;
+                        {% endif %}">
+                        {{ video.get_status_display|upper }}
+                    </div>
+
+                    <h4 style="margin: 0 0 10px 0;">{{ video.format }}</h4>
+                    <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Дедлайн: <b>{{ video.deadline|date:"d.m.Y" }}</b></p>
+
+                    {% if user == contract.blogger and video.status == 'in_progress' %}
+                    <form method="POST" action="{% url 'upload_video' video.id %}">
+                        <input type="url" name="link" placeholder="Ссылка на ролик (Unlisted)" style="width:100%; padding:8px; margin-bottom:8px; border-radius:8px; border:1px solid #ddd;">
+                        <div style="display:flex; gap:5px;">
+                            <input type="text" name="start" placeholder="01:20" style="width:50%; padding:8px; border-radius:8px; border:1px solid #ddd;">
+                            <input type="text" name="end" placeholder="02:10" style="width:50%; padding:8px; border-radius:8px; border:1px solid #ddd;">
+                        </div>
+                        <button type="submit" style="width:100%; margin-top:10px; background:#007bff; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer;">Отправить на проверку</button>
+                    </form>
+                    {% endif %}
+
+                    {% if user == contract.advertiser and video.status == 'review' %}
+                    <div style="background: #f9f9f9; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
+                        <a href="{{ video.link }}" target="_blank" style="color: #007bff; font-size: 13px; text-decoration: none;">Просмотреть ролик ↗</a>
+                        <div style="font-size: 11px; margin-top: 5px;">Таймкод: {{ video.start_time }} — {{ video.end_time }}</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button onclick="approveVideo({{ video.id }})" style="background:#28a745; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:600;">Утвердить</button>
+                        <button onclick="rejectVideo({{ video.id }})" style="background:#dc3545; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:600;">Доработка</button>
+                    </div>
+                    {% endif %}
+
+                    {% if user == contract.blogger and video.status == 'approved' %}
+                    <div style="text-align: center;">
+                        <p style="font-size: 12px; color: #28a745;">✅ Ролик утвержден!</p>
+                        <button style="background: #000; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                            💎 ПОЛУЧИТЬ ERID
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if contract.all_videos_released and contract.status != 'completed' %}
+        <div style="padding: 20px 30px; background: #fffceb; border-top: 1px solid #ffeeba; text-align: center;">
+            <p style="margin-bottom: 10px; font-weight: 600;">Все ролики выпущены. Завершить сделку и перевести оплату?</p>
+            <button style="background: #28a745; color: white; border: none; padding: 15px 40px; border-radius: 30px; font-weight: 800; cursor: pointer; font-size: 16px; box-shadow: 0 4px 15px rgba(40,167,69,0.3);">
+                ✅ ВСЕ ОК, ВЫПЛАТИТЬ {{ contract.total_amount }} ₽
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

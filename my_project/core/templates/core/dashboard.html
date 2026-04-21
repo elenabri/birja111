@@ -1,0 +1,44 @@
+{% extends "core/base.html" %}
+
+{% block title %}Мои переписки{% endblock %}
+
+{% block content %}
+<div style="font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
+ 
+</nav>
+    <h1>Личный кабинет: {{ user.username }}</h1>
+    <p>Ваша роль: <strong>{{ user.get_role_display }}</strong></p>
+    <hr>
+
+    {% if user.role == 'blogger' %}
+    {% if profile %}
+        <h2>Ваш канал: {{ profile.channel_name }}</h2>
+        <p>Ссылка: <a href="{{ profile.channel_link }}">{{ profile.channel_link }}</a></p>
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px;">
+            <h3>Ваш прайс-лист:</h3>
+            <ul>
+                <li>Начало видео: {{ profile.price_start }} ₽</li>
+                <li>Середина: {{ profile.price_middle }} ₽</li>
+                <li>Конец: {{ profile.price_end }} ₽</li>
+                <li>Shorts: {{ profile.price_shorts }} ₽</li>
+            </ul>
+            <p><strong>Тематики:</strong> {{ profile.categories }}</p>
+        </div>
+{% endif %}
+    {% elif user.role == 'advertiser' %}
+        <h2>Ваша компания: {{ profile.company_name }}</h2>
+        <h3>Ваши активные объявления:</h3>
+        {% for ad in my_ads %}
+            <div style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;">
+                <h4>{{ ad.title }}</h4>
+                <p>Категория: {{ ad.category }}</p>
+                <p>{{ ad.description|truncatewords:20 }}</p>
+            </div>
+        {% empty %}
+            <p>У вас пока нет объявлений.</p>
+        {% endfor %}
+    {% endif %}
+
+    
+</div>
+{% endblock %}

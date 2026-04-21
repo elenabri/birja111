@@ -1,0 +1,402 @@
+{% extends "core/base.html" %}
+
+{% block title %}Чат с {{ other_user.username }}{% endblock %}
+
+{% block content %}
+<div class="chat-main-container" id="chat-layout" 
+     style="display: grid; grid-template-columns: 280px 1fr 380px; height: 88vh; background: white; border: 1px solid #ddd; border-radius: 15px; overflow: hidden; margin: 10px auto; max-width: 1550px; transition: all 0.3s ease;">
+    
+    <aside id="side-panel" style="border-right: 1px solid #eee; background: #f9f9f9; overflow: hidden; display: flex; flex-direction: column; position: relative;">
+        <button onclick="toggleSidePanel()" style="position: absolute; right: 8px; top: 18px; background: none; border: none; cursor: pointer; z-index: 10; font-size: 14px; color: #aaa;">
+            <span id="toggle-icon">◀</span>
+        </button>
+
+        <div id="side-panel-content" style="width: 280px; padding-top: 10px;">
+            <div style="padding: 10px 20px; font-weight: bold; border-bottom: 1px solid #eee; margin-bottom: 10px; font-size: 14px; color: #666;">Мои диалоги</div>
+            
+            {% for chat in all_chats %}
+            <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; text-decoration: none; color: #333; transition: background 0.2s; {% if chat.other_user == other_user %}background: #fff;{% endif %}">
+                <img src="{{ chat.other_user.profile.avatar_url|default:'/static/img/default-avatar.png' }}" style="width: 35px; height: 35px; border-radius: 50%; flex-shrink: 0; border: 1px solid #ddd;">
+                <div class="chat-info-text">
+                    <div style="font-size: 13px; font-weight: 600;">{{ chat.other_user.username }}</div>
+                    <div style="font-size: 11px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Последнее сообщение...</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </aside>
+
+    <main style="display: flex; flex-direction: column; background: white; border-right: 1px solid #eee;">
+        <div style="padding: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 12px; background: #fff;">
+            <img src="{{ other_user.profile.avatar.url|default:'/static/img/default-avatar.png' }}" style="width: 40px; height: 40px; border-radius: 50%;">
+            <div>
+                <div style="font-weight: bold; font-size: 15px;">
+                    {% if other_user.blogger_profile %}
+                        <a href="{{ other_user.blogger_profile.channel_url }}" target="_blank" style="text-decoration: none; color: #007bff;">📺 {{ other_user.username }}</a>
+                    {% else %}
+                        {{ other_user.username }}
+                    {% endif %}
+                </div>
+                <div style="font-size: 11px; color: #28a745;">● В сети / Обсуждение Vkusnevich</div>
+            </div>
+        </div>
+
+        <div id="chat-log" style="flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: #fcfcfc;">
+            {% for msg in chat_messages %}
+                <div style="max-width: 70%; padding: 10px 15px; border-radius: 15px; font-size: 14px; 
+                    {% if msg.sender == user %} align-self: flex-end; background: #007bff; color: white; border-bottom-right-radius: 2px;
+                    {% else %} align-self: flex-start; background: white; color: #333; border-bottom-left-radius: 2px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); {% endif %}">
+                    {{ msg.text }}
+                    <div style="font-size: 10px; margin-top: 5px; opacity: 0.7; text-align: right;">{{ msg.created_at|date:"H:i" }}</div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <form method="POST" style="padding: 15px; background: white; border-top: 1px solid #eee; display: flex; gap: 10px;">
+            {% csrf_token %}
+            <input type="text" name="text" placeholder="Напишите сообщение..." required style="flex-grow: 1; padding: 12px 18px; border: 1px solid #ddd; border-radius: 25px; outline: none; font-size: 14px;">
+            <button type="submit" style="background: #007bff; color: white; border: none; padding: 10px 25px; border-radius: 25px; cursor: pointer; font-weight: bold;">Отправить</button>
+        </form>
+    </main>
+
+    <aside style="background: #fff; display: flex; flex-direction: column; overflow: hidden;">
+        <div style="display: flex; border-bottom: 1px solid #eee; background: #f9f9f9;">
+            <button onclick="toggleRightTab('products')" id="btn-tab-products" style="flex: 1; padding: 15px; border: none; background: none; cursor: pointer; border-bottom: 2px solid #007bff; font-weight: bold; font-size: 13px;">📦 ТОВАРЫ</button>
+            <button onclick="toggleRightTab('contract')" id="btn-tab-contract" style="flex: 1; padding: 15px; border: none; background: none; cursor: pointer; color: #666; font-size: 13px;">📜 ДОГОВОР</button>
+        </div>
+
+        <div id="right-panel-content" style="flex-grow: 1; overflow-y: auto; padding: 20px;">
+            <div id="tab-products">
+                <h4 style="margin: 0 0 15px 0; font-size: 14px; color: #333;">Ваш перечень товаров:</h4>
+                <div style="display: grid; gap: 10px;">
+                    {% for product in advertiser_products %}
+                    <label style="display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #eee; border-radius: 10px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.borderColor='#007bff'" onmouseout="this.style.borderColor='#eee'">
+                        <input type="checkbox" name="selected_prod" value="{{ product.id }}" 
+                               onchange="toggleProductSelection('{{ product.id }}', '{{ product.name }}')"
+                               style="width: 18px; height: 18px; accent-color: #007bff;">
+                        <img src="{{ product.image_url }}" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover;">
+                        <span style="font-size: 13px; font-weight: 500;">{{ product.name }}</span>
+                    </label>
+                    {% empty %}
+                    <p style="font-size: 12px; color: #999;">Товары не найдены</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div id="tab-contract" style="display: none;">
+                <div id="plan-editor-content">
+                    </div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<script>
+// --- ДАННЫЕ (В реальности приходят из Django) ---
+let activeChatId = "{{ chat_id|default:'1' }}";
+let adPlans = {
+    [activeChatId]: {
+        isSigned: false,
+        number: null,
+        productIds: [],
+        videos: [],
+        platformsBlogger: [],
+        platformsBloggerOther: '',
+        platformsAdv: [],
+        platformsAdvOther: '',
+        rightToUseOnMarketplaces: false,
+        isCollaboration: false,
+        needMarking: true,
+        sendVideoBeforehand: true,
+        reputationSafe: true,
+        leaveReview: false,
+        reviewProductLink: '',
+        guarantees: { low: 0, high: 0, extraVideo: false }
+    }
+};
+
+let users = [
+    { id: "{{ other_user.id }}", medianLong: 50000, medianShorts: 150000 }
+];
+
+let products = [
+    {% for p in advertiser_products %}
+    { id: {{ p.id }}, name: "{{ p.name }}" },
+    {% endfor %}
+];
+
+// --- ЛОГИКА ИНТЕРФЕЙСА ---
+
+function toggleSidePanel() {
+    const layout = document.getElementById('chat-layout');
+    const icon = document.getElementById('toggle-icon');
+    const infoTexts = document.querySelectorAll('.chat-info-text');
+    
+    if (layout.style.gridTemplateColumns.startsWith('280px')) {
+        layout.style.gridTemplateColumns = '75px 1fr 380px';
+        icon.innerText = '▶';
+        infoTexts.forEach(t => t.style.display = 'none');
+    } else {
+        layout.style.gridTemplateColumns = '280px 1fr 380px';
+        icon.innerText = '◀';
+        infoTexts.forEach(t => t.style.display = 'block');
+    }
+}
+
+function toggleRightTab(tab) {
+    const prod = document.getElementById('tab-products');
+    const cont = document.getElementById('tab-contract');
+    const btnProd = document.getElementById('btn-tab-products');
+    const btnCont = document.getElementById('btn-tab-contract');
+
+    if (tab === 'products') {
+        prod.style.display = 'block'; cont.style.display = 'none';
+        btnProd.style.borderBottom = '2px solid #007bff'; btnProd.style.color = '#333';
+        btnCont.style.borderBottom = 'none'; btnCont.style.color = '#666';
+    } else {
+        prod.style.display = 'none'; cont.style.display = 'block';
+        btnCont.style.borderBottom = '2px solid #007bff'; btnCont.style.color = '#333';
+        btnProd.style.borderBottom = 'none'; btnProd.style.color = '#666';
+        renderPlanEditor();
+    }
+}
+
+// --- ТВОЯ ФУНКЦИЯ RENDER ---
+
+function renderPlanEditor() {
+    const plan = adPlans[activeChatId];
+    const container = document.getElementById('plan-editor-content');
+    const isSigned = plan.isSigned;
+    const disabledAttr = isSigned ? 'disabled' : '';
+    const readOnlyAttr = isSigned ? 'readonly' : '';
+
+    const partnerId = "{{ other_user.id }}";
+    const blogger = users.find(u => u.id == partnerId);
+    
+    // --- ЛОГИКА ОПРЕДЕЛЕНИЯ МЕДИАНЫ ---
+    let medianVal = 0;
+    if (blogger) {
+        const firstVideoFormat = plan.videos[0]?.format || '';
+        if (firstVideoFormat.includes('Shorts')) {
+            medianVal = blogger.medianShorts || 0;
+        } else {
+            medianVal = blogger.medianLong || 0;
+        }
+    }
+    const medianText = medianVal > 0 ? `${medianVal.toLocaleString()} просмотров` : "не указана";
+
+    // --- ВСПОМОГАТЕЛЬНЫЕ РЕНДЕРЫ ---
+    const platforms = ['YouTube', 'Instagram', 'Telegram', 'Wibes'];
+    const renderCheckboxes = (type, savedArray = []) => {
+        return platforms.map(p => `
+            <label style="display: inline-flex; align-items: center; margin-right: 15px; font-size: 13px; cursor: pointer; padding: 5px 0;">
+                <input type="checkbox" ${savedArray.includes(p) ? 'checked' : ''} ${disabledAttr}
+                       onchange="updatePlatformSelection('${type}', '${p}')" 
+                       style="width:16px; height:16px; margin-right:6px; accent-color:#007bff;"> ${p}
+            </label>
+        `).join('');
+    };
+
+    // --- БЛОК 1: ПЛОЩАДКИ И ПРАВА ---
+    const rightsHtml = `
+        <div class="card" style="background: #f4f7f6; border: 1px solid #cfd8dc; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #37474f;">⚖️ Площадки и Права размещения</h3>
+            <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed #cfd8dc;">
+                <label style="display: block; font-weight: bold; font-size: 13px; margin-bottom: 8px;">Блогер обязуется выложить в:</label>
+                <div style="display: flex; flex-wrap: wrap;">${renderCheckboxes('blogger', plan.platformsBlogger)}</div>
+                <input type="text" placeholder="Другие площадки блогера..." value="${plan.platformsBloggerOther || ''}" ${readOnlyAttr}
+                       oninput="adPlans[activeChatId].platformsBloggerOther=this.value" 
+                       style="margin-top: 8px; font-size: 12px; padding: 8px; width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div>
+                <label style="display: block; font-weight: bold; font-size: 13px; margin-bottom: 8px;">Рекламодатель может использовать в:</label>
+                <div style="display: flex; flex-wrap: wrap; margin-bottom: 10px;">${renderCheckboxes('advertiser', plan.platformsAdv)}</div>
+                <div style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #eceff1; display: grid; gap: 12px;">
+                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 13px;">
+                        <input type="checkbox" ${plan.rightToUseOnMarketplaces ? 'checked' : ''} ${disabledAttr}
+                               onchange="adPlans[activeChatId].rightToUseOnMarketplaces = this.checked; saveData();"> 
+                        <span>Заказчик имеет право размещать материал в <b>карточках товаров на маркетплейсах</b> (WB, Ozon)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; color: #d32f2f;">
+                        <input type="checkbox" ${plan.isCollaboration ? 'checked' : ''} ${disabledAttr}
+                               onchange="adPlans[activeChatId].isCollaboration = this.checked; saveData();"> 
+                        <b>Формат «Соавторство» (Collaboration)</b>
+                    </label>
+                </div>
+            </div>
+        </div>`;
+
+    // --- БЛОК 2: ЮРИДИЧЕСКАЯ МАРКИРОВКА ---
+    const markingHtml = `
+        <div class="card" style="background: #f1f8e9; border: 1px solid #c5e1a5; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #33691e;">⚖️ Юридическая Маркировка</h3>
+            <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 20px;">
+                <label style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size: 13px;">
+                    <input type="radio" name="marking" ${plan.needMarking ? 'checked' : ''} ${disabledAttr}
+                           onchange="adPlans[activeChatId].needMarking = true; saveData();"> Нужна
+                </label>
+                <label style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size: 13px;">
+                    <input type="radio" name="marking" ${!plan.needMarking ? 'checked' : ''} ${disabledAttr}
+                           onchange="adPlans[activeChatId].needMarking = false; saveData();"> Не нужна
+                </label>
+            </div>
+            <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 13px; color: #1b5e20;">
+                <input type="checkbox" ${plan.sendVideoBeforehand ? 'checked' : ''} ${disabledAttr}
+                       onchange="adPlans[activeChatId].sendVideoBeforehand = this.checked; saveData();"> 
+                <b>Прислать видео за 1 день до выхода для утверждения и токена (erid)</b>
+            </label>
+        </div>`;
+
+    // --- БЛОК 3: БЕЗОПАСНОСТЬ И РЕПУТАЦИЯ ---
+    const reputationHtml = `
+        <div class="card" style="background: #fff; border: 1px solid #e0e0e0; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #d32f2f;">🛡️ Безопасность и Репутация</h3>
+            <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 13px;">
+                <input type="checkbox" ${plan.reputationSafe ? 'checked' : ''} ${disabledAttr}
+                       onchange="adPlans[activeChatId].reputationSafe = this.checked; saveData();"> 
+                <div>
+                    <b>Гарантия репутационной чистоты:</b>
+                    <div style="font-size: 11px; color: #666; margin-top: 4px;">Запрещена нецензурная лексика, политика и действия, порочащие бренд.</div>
+                </div>
+            </label>
+        </div>`;
+
+    // --- БЛОК 4: ОТЗЫВ И ПРОДВИЖЕНИЕ ---
+    const reviewHtml = `
+        <div class="card" style="background: #fff; border: 1px solid #ffccbc; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #e64a19;">⭐ Отзыв и продвижение</h3>
+            <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 13px;">
+                <input type="checkbox" ${plan.leaveReview ? 'checked' : ''} ${disabledAttr}
+                       onchange="adPlans[activeChatId].leaveReview = this.checked; saveData();"> 
+                <b>Блогер обязуется оставить положительный отзыв с фото на WB/Ozon</b>
+            </label>
+            <input type="text" placeholder="Ссылка на товар для отзыва..." value="${plan.reviewProductLink || ''}" ${readOnlyAttr}
+                   oninput="adPlans[activeChatId].reviewProductLink=this.value" 
+                   style="margin-top: 10px; font-size: 12px; padding: 8px; width: 100%; border: 1px solid #ffccbc; border-radius: 4px;">
+        </div>`;
+
+    // --- БЛОК 5: ГАРАНТИИ И ПРОСМОТРЫ ---
+    const guaranteesHtml = `
+        <div class="card" style="background: #fff8ef; border: 1px solid #ffe0b2; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0; font-size: 16px;">📊 Гарантии и просмотры</h3>
+                <span style="font-size: 11px; background: #ffedcc; padding: 4px 8px; border-radius: 4px; color: #856404;">Медиана: <b>${medianText}</b></span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label style="font-size: 11px;">Если < 50% (возврат ₽):</label>
+                    <input type="number" value="${plan.guarantees.low || 0}" ${readOnlyAttr} oninput="adPlans[activeChatId].guarantees.low=this.value">
+                </div>
+                <div>
+                    <label style="font-size: 11px;">Если > 150% (бонус ₽):</label>
+                    <input type="number" value="${plan.guarantees.high || 0}" ${readOnlyAttr} oninput="adPlans[activeChatId].guarantees.high=this.value">
+                </div>
+            </div>
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; color: #856404; margin-top:15px;">
+                <input type="checkbox" ${plan.guarantees.extraVideo ? 'checked' : ''} ${disabledAttr}
+                       onchange="adPlans[activeChatId].guarantees.extraVideo = this.checked; saveData();"> 
+                <b>Бесплатный доп. ролик при низких просмотрах</b>
+            </label>
+        </div>`;
+
+    // --- РЕНДЕР СПИСКА ВИДЕО ---
+    const videosHtml = plan.videos.map((v, idx) => `
+        <div class="card" style="border: 1px solid #e0e0e0; margin-bottom: 20px; border-radius: 12px; padding: 20px; background: #fff;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                <h4 style="margin: 0; color: #007bff;">🎥 Видео №${idx + 1}</h4>
+                ${!isSigned ? `<button onclick="removeVideoFromPlan(${idx})" style="color:red; border:none; background:none; cursor:pointer;">✖ Удалить</button>` : ''}
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <select onchange="updatePlanField(${idx}, 'format', this.value)" ${disabledAttr} style="padding:8px; border-radius:5px; border:1px solid #ddd;">
+                    <option ${v.format==='Shorts'?'selected':''}>Shorts / Reels</option>
+                    <option ${v.format==='Post'?'selected':''}>Пост</option>
+                    <option ${v.format==='Integration'?'selected':''}>Интеграция</option>
+                </select>
+                <input type="date" value="${v.date || ''}" ${readOnlyAttr} onchange="updatePlanField(${idx}, 'date', this.value)" style="padding:8px; border-radius:5px; border:1px solid #ddd;">
+            </div>
+            <div style="margin-top:10px;">
+                <label style="font-size:11px; color:#666;">Сценарий / Сюжет:</label>
+                <textarea ${readOnlyAttr} oninput="updatePlanField(${idx}, 'scriptAdv', this.value)" style="width:100%; height:50px; margin-top:5px; border:1px solid #ddd; border-radius:5px; padding:5px;">${v.scriptAdv || ''}</textarea>
+            </div>
+        </div>
+    `).join('');
+
+    // --- ФИНАЛЬНАЯ СБОРКА ---
+    container.innerHTML = `
+        ${!isSigned ? `<button onclick="addVideoToPlan()" style="width:100%; padding:15px; background:#007bff; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; margin-bottom:20px;">+ Добавить видео</button>` : ''}
+        ${videosHtml}
+        ${rightsHtml}
+        ${markingHtml}
+        ${reputationHtml}
+        ${reviewHtml}
+        ${guaranteesHtml}
+        <div style="margin-top:30px;">
+            ${!isSigned 
+                ? `<button onclick="signContract()" style="width:100%; padding:18px; background:#28a745; color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer; box-shadow: 0 4px 15px rgba(40,167,69,0.3);">ПОДПИСАТЬ ДОГОВОР</button>`
+                : `<div style="padding:20px; background:#e3f2fd; color:#0d47a1; text-align:center; border-radius:12px; font-weight:bold; border: 2px solid #007bff;">🔒 ДОГОВОР ПОДПИСАН №${plan.number}</div>`
+            }
+        </div>
+    `;
+}
+
+// Вспомогательные функции
+function addVideoToPlan() {
+    adPlans[activeChatId].videos.push({ format: 'Shorts', date: '', cost: 0, selectedProducts: [] });
+    renderPlanEditor();
+}
+
+function updatePlanField(idx, field, val) {
+    adPlans[activeChatId].videos[idx][field] = val;
+}
+
+function toggleProductSelection(id, name) {
+    const plan = adPlans[activeChatId];
+    const index = plan.productIds.indexOf(id);
+    if (index === -1) plan.productIds.push(id);
+    else plan.productIds.splice(index, 1);
+    if (document.getElementById('tab-contract').style.display !== 'none') renderPlanEditor();
+}
+
+function signContract() {
+    if (confirm("После подписания условия нельзя будет изменить. Продолжить?")) {
+        const plan = adPlans[activeChatId];
+        plan.isSigned = true;
+        plan.number = "VK-" + Math.floor(1000 + Math.random() * 9000);
+        renderPlanEditor();
+        // Здесь должен быть AJAX запрос к Django для сохранения в БД
+    }
+}
+
+function saveData() {
+    const plan = adPlans[activeChatId];
+    
+    // Показываем индикатор сохранения (опционально)
+    console.log("Данные отправляются в базу Vkusnevich...", plan);
+
+    fetch(`/chat/save_contract/${activeChatId}/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}" // Берем токен из Django
+        },
+        body: JSON.stringify(plan)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            console.log("Сохранено!");
+            // Можно добавить маленькую зеленую галочку в углу панели
+        }
+    })
+    .catch(error => console.error("Ошибка сохранения:", error));
+}
+</script>
+
+<style>
+    .card textarea { width: 100%; border: 1px solid #ddd; border-radius: 5px; margin-top: 10px; font-family: inherit; font-size: 13px; padding: 8px; }
+    .chat-main-container { box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+</style>
+{% endblock %}

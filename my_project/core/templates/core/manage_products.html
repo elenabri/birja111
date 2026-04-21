@@ -1,0 +1,74 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h2 style="margin: 0;">📦 Мои товары на рекламу</h2>
+        <button onclick="document.getElementById('add-product-form').classList.toggle('hidden')" 
+                style="background: var(--primary); color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+            + Добавить товар
+        </button>
+    </div>
+
+    <div id="add-product-form" class="hidden" style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 30px;">
+        <form method="post" style="display: grid; gap: 15px;">
+    {% csrf_token %}
+    <div>
+        <label style="font-size: 13px; font-weight: 600;">Название товара</label>
+        <input type="text" name="name" placeholder="Напр: Сковорода с покрытием" required 
+               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+    </div>
+    
+    <div>
+        <label style="font-size: 13px; font-weight: 600;">Ссылка на WB/Ozon</label>
+        <input type="url" name="link" placeholder="https://..." required 
+               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+    </div>
+
+    <div>
+        <label style="font-size: 13px; font-weight: 600;">Фото товара (прямая ссылка)</label>
+        <input type="url" name="image_url" placeholder="https://drive.google.com/..." 
+               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+    </div>
+
+    <div>
+        <label style="font-size: 13px; font-weight: 600;">ТЗ и пожелания к рекламе</label>
+        <textarea name="description" rows="4" placeholder="На чем сделать акцент? (Напр: показать антипригарные свойства, не использовать мат)" 
+                  style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-family: sans-serif;"></textarea>
+    </div>
+
+    <button type="submit" style="background: #10b981; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+        Сохранить товар
+    </button>
+</form>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+        {% for product in products %}
+        <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; position: relative; transition: transform 0.2s;">
+            <h4 style="margin: 0 0 10px 0; color: #1e293b;">{{ product.name }}</h4>
+            <a href="{{ product.link }}" target="_blank" style="font-size: 13px; color: var(--primary); text-decoration: none; word-break: break-all;">
+                🔗 Перейти на страницу товара
+            </a>
+            
+            <div style="margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 15px; display: flex; justify-content: flex-end;">
+                <form action="{% url 'delete_product' product.pk %}" method="post" onsubmit="return confirm('Удалить этот товар?')">
+                    {% csrf_token %}
+                    <button type="submit" style="background: none; border: none; color: #ef4444; font-size: 13px; cursor: pointer; font-weight: 600;">
+                        🗑️ Удалить
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% empty %}
+        <div style="grid-column: 1/-1; text-align: center; padding: 50px; color: #94a3b8;">
+            <p>У вас пока нет добавленных товаров. Добавьте первый, чтобы предлагать его блогерам.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .hidden { display: none; }
+</style>
+{% endblock %}

@@ -1,0 +1,107 @@
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.15);">
+            <div class="modal-header px-4 pt-4 pb-0 border-0">
+                <h5 class="modal-title" id="filterModalLabel" style="font-weight: 800; color: #1e293b; letter-spacing: -0.02em;">
+                    Фильтры поиска
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <form method="GET" action="{% url 'core:marketplace' %}" id="filter-form">
+                    <input type="hidden" name="tab" value="{{ active_tab }}">
+
+                    <div class="mb-4">
+                        <label class="form-label" style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Тематика</label>
+                        <select name="topic" id="topicSelect" class="form-select" style="border-radius: 12px; padding: 12px; border-color: #e2e8f0; font-size: 15px; color: #1e293b;">
+                            <option value="">Все тематики</option>
+                            {% for value, label in TOPIC_CHOICES %}
+                                <option value="{{ value }}" {% if request.GET.topic == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-4" id="subTopicContainer" style="display: none;">
+                        <label class="form-label" style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Узкое направление</label>
+                        <select name="sub_topic" id="subTopicSelect" class="form-select" style="border-radius: 12px; padding: 12px; border-color: #e2e8f0; font-size: 15px; color: #1e293b;">
+                            <option value="">Любое направление</option>
+                            </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label" style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Сортировка</label>
+                        <select name="sort" class="form-select" style="border-radius: 12px; padding: 12px; border-color: #e2e8f0; font-size: 15px;">
+                            <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Сначала новые</option>
+                            <option value="popular" {% if request.GET.sort == 'popular' %}selected{% endif %}>По популярности</option>
+                            <option value="oldest" {% if request.GET.sort == 'oldest' %}selected{% endif %}>Сначала старые</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid gap-3 pt-2">
+                        <button type="submit" class="btn btn-primary" style="background: #2563eb; border: none; border-radius: 12px; padding: 14px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);">
+                            Применить фильтры
+                        </button>
+                        
+                        <a href="{% url 'core:marketplace' %}?tab={{ active_tab }}" class="btn btn-link" style="color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 600;">
+                            Сбросить все настройки
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const subTopicsMap = {
+            'education': ['История, политика, журналистика', 'Физика, астрономия, биология, химия', 'Психология и саморазвитие', 'Криминалистика (разбор дел)', 'Иностранные языки', 'Карьера, поиск работы, юридические лайфхаки'],
+            'tech': ['Смартфоны, ноутбуки, ПК', 'Софт, программирование, ИИ', '3D-печать и ЧПУ', 'Фотография и видеомонтаж', 'Ретротехника (старые ПК, консоли)', 'VR/AR контент, нейросети'],
+            'diy': ['Ремонт, стройка, дизайн интерьеров', 'Сад, огород, ландшафт', 'Лепка, рисование, каллиграфия', 'Рукоделие (вязание, вышивание)', 'Мыловарение, свечи, бонсай', 'Кузнечное дело, резьба по дереву', 'Аквариумистика, пчеловодство'],
+            'lifestyle': ['Влоги (повседневная жизнь)', 'Семья и дети (декрет, материнство)', 'Путешествия (тревел-блоги)', 'Подкасты (разговоры)', 'ASMR', 'Медитации, звуки природы'],
+            'business': ['Кейсы, стартапы, предпринимательство', 'Криптовалюты, трейдинг, инвестиции', 'Недвижимость', 'Паранормальное и мистика (как бизнес)'],
+            'entertainment': ['Гейминг (летсплеи, обзоры)', 'Стриминг, спидран', 'Кино, сериалы, аниме', 'Реакции', 'Пранки, челленджи', 'Юмор, стендап, пародии', 'Музыка (каверы, разборы)', 'Танцы', 'Знаменитости', 'Фокусы и магия'],
+            'sport': ['Фитнес, бодибилдинг, йога', 'Трансформации тела', 'Охота, рыбалка, бушкрафт, выживание', 'Экстремальный спорт'],
+            'auto': ['Обзоры машин, тест-драйвы', 'Авто-блоги, бортжурналы', 'Авторемонт и тюнинг', 'Мотоциклы', 'Авиация, корабли'],
+            'food': ['Рецепты', 'Обзоры ресторанов и фастфуда', 'Выращивание грибов'],
+            'art': ['Стрит-арт, граффити', 'Анимация', 'Косплей', 'Мода, стиль, история моды', 'Репортажи с мероприятий', 'Городские легенды, фольклор']
+        };
+
+        const topicSelect = document.getElementById('topicSelect');
+        const subTopicSelect = document.getElementById('subTopicSelect');
+        const subTopicContainer = document.getElementById('subTopicContainer');
+
+        function updateSubTopics(selectedTopic, selectedSub = '') {
+            // Очищаем текущие опции
+            subTopicSelect.innerHTML = '<option value="">Любое направление</option>';
+            
+            if (selectedTopic && subTopicsMap[selectedTopic]) {
+                subTopicContainer.style.display = 'block';
+                subTopicsMap[selectedTopic].forEach(function(st) {
+                    const option = document.createElement('option');
+                    option.value = st;
+                    option.textContent = st;
+                    if (st === selectedSub) option.selected = true;
+                    subTopicSelect.appendChild(option);
+                });
+            } else {
+                subTopicContainer.style.display = 'none';
+            }
+        }
+
+        // Слушатель изменений
+        topicSelect.addEventListener('change', function() {
+            updateSubTopics(this.value);
+        });
+
+        // Проверка при загрузке (если фильтры уже активны)
+        const currentTopic = topicSelect.value;
+        const currentSub = "{{ request.GET.sub_topic|default:'' }}";
+        if (currentTopic) {
+            updateSubTopics(currentTopic, currentSub);
+        }
+    });
+</script>

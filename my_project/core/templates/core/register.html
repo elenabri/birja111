@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация | Вкусневич</title>
+    <style>
+        :root { 
+            --primary: #2563eb; 
+            --border: #e2e8f0;
+            --text-main: #1e293b;
+            --text-label: #64748b;
+        }
+
+        body { background: #f8fafc; margin: 0; font-family: -apple-system, sans-serif; color: var(--text-main); }
+        .register-wrapper { padding: 40px 20px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        
+        .back-nav { width: 100%; max-width: 600px; margin-bottom: 20px; }
+        .btn-back { background: none; border: none; color: var(--text-label); cursor: pointer; font-size: 14px; }
+
+        .register-card { width: 100%; max-width: 700px; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); box-sizing: border-box; }
+        .register-header { text-align: center; margin-bottom: 30px; }
+        .register-header h2 { font-size: 24px; margin: 0; }
+        #header-desc { color: var(--text-label); margin-top: 8px; font-size: 14px; }
+
+        /* Роли */
+        .role-options { display: flex; gap: 12px; margin-bottom: 25px; }
+        .role-option { flex: 1; cursor: pointer; }
+        .role-radio { display: none; }
+        .role-box { 
+            padding: 14px; border: 1px solid var(--border); border-radius: 10px; 
+            text-align: center; font-weight: 600; color: #64748b; transition: 0.2s;
+        }
+        .role-radio:checked + .role-box { border-color: var(--primary); background: var(--primary); color: white; }
+
+        .section-label { 
+            font-size: 12px; font-weight: 800; text-transform: uppercase; 
+            letter-spacing: 1px; color: var(--text-label); 
+            margin: 30px 0 15px 0; display: block; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;
+        }
+
+        /* Сообщение про прайс */
+        .info-bubble { 
+            background: #eff6ff; border-radius: 10px; padding: 15px; 
+            margin-bottom: 20px; border: 1px solid #dbeafe; 
+            font-size: 13px; color: #1e40af; line-height: 1.5;
+        }
+
+        .form-group { margin-bottom: 18px; display: flex; flex-direction: column; position: relative; }
+        .form-group label { font-size: 13px; font-weight: 600; color: var(--text-label); margin-bottom: 6px; }
+        .field-error { color: #ef4444; font-size: 11px; font-weight: 600; margin-bottom: 4px; display: none; }
+        
+        input { 
+            width: 100%; padding: 12px; border: 1px solid var(--border); 
+            border-radius: 8px; box-sizing: border-box; font-size: 14px; transition: 0.2s;
+        }
+
+        /* Прайс-лист */
+        .price-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; background: #f8fafc; padding: 15px; border-radius: 12px; }
+        .price-item label { font-size: 11px !important; text-align: center; display: block; margin-bottom: 8px; }
+        .price-item input { text-align: center; font-weight: 600; }
+
+        /* Основные категории */
+        .category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+        .cat-item input { display: none; }
+        .cat-btn { 
+            padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; 
+            font-size: 12px; text-align: center; background: #fff; cursor: pointer; transition: 0.2s;
+        }
+        .cat-item input:checked + .cat-btn { background: #eff6ff; border-color: var(--primary); color: var(--primary); font-weight: 600; }
+
+        /* Контейнер подкатегорий */
+        .sub-topics-container { 
+            margin-top: 15px; padding: 15px; background: #f8fafc; 
+            border-radius: 12px; display: none; border: 1px solid #f1f5f9;
+        }
+        .sub-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .sub-tag { 
+            padding: 6px 14px; background: white; border: 1px solid var(--border); 
+            border-radius: 20px; font-size: 12px; cursor: pointer; transition: 0.2s;
+        }
+        .sub-tag.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Загрузка файла */
+        .file-zone {
+            border: 2px dashed var(--border); border-radius: 10px; padding: 15px;
+            text-align: center; cursor: pointer; transition: 0.2s; background: #fff;
+        }
+        .file-zone:hover { border-color: var(--primary); background: #f0f7ff; }
+
+        .btn-submit { width: 100%; margin-top: 35px; padding: 18px; background: #1e293b; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 15px; }
+        
+        #api-status { display: none; margin-top: 20px; padding: 15px; border-radius: 10px; font-size: 13px; }
+        .mp-badge { position: absolute; right: 12px; top: 34px; font-weight: 800; font-size: 10px; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<div class="register-wrapper">
+    <nav class="back-nav">
+        <button onclick="window.history.back()" class="btn-back">← Назад</button>
+    </nav>
+
+    <div class="register-card">
+        <div class="register-header">
+            <h2>Регистрация</h2>
+            <p id="header-desc">Введите данные вашего профиля</p>
+        </div>
+
+        <form method="post" id="reg-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <input type="hidden" name="api_channel_name" id="id_api_name">
+            <input type="hidden" name="api_subs" id="id_api_subs">
+            <input type="hidden" name="api_long_median" id="id_api_long">
+            <input type="hidden" name="api_shorts_median" id="id_api_shorts">
+            <input type="hidden" name="sub_topics" id="id_sub_topics_json">
+
+            <div class="role-selection">
+                <div class="role-options">
+                    <label class="role-option">
+                        <input type="radio" name="role" value="blogger" class="role-radio" checked>
+                        <div class="role-box">Я Блогер</div>
+                    </label>
+                    <label class="role-option">
+                        <input type="radio" name="role" value="advertiser" class="role-radio">
+                        <div class="role-box">Я Рекламодатель</div>
+                    </label>
+                </div>
+            </div>
+
+            <div id="hidden-content" style="display:none;">
+                <div class="form-group">
+                    <span id="err-email" class="field-error">Введите email</span>
+                    <label>E-mail для связи</label>
+                    <input type="email" name="email" placeholder="mail@example.com" required>
+                </div>
+
+                <div id="blogger-fields" style="display:none;">
+                    <div class="form-group">
+                        <span id="err-channel" class="field-error">Введите @handle</span>
+                        <label>YouTube канал (@handle)</label>
+                        <input type="text" name="channel_link" placeholder="@канал">
+                    </div>
+                    
+                    <label class="section-label">Прайс-лист</label>
+                    <div class="info-bubble">
+                        <b>Зачем заполнять прайс?</b> Это позволит бренду <b>«Вкусневич»</b> и другим рекламодателям сразу видеть ваши условия, что ускоряет заключение сделки в 3 раза.
+                    </div>
+                    <div class="price-grid">
+                        <div class="price-item"><label>Прерол (В начале)</label><input type="number" name="price_start" placeholder="0"></div>
+                        <div class="price-item"><label>Мидрол (В середине)</label><input type="number" name="price_middle" placeholder="0"></div>
+                        <div class="price-item"><label>Пост (В конце)</label><input type="number" name="price_end" placeholder="0"></div>
+                        <div class="price-item"><label>Shorts</label><input type="number" name="price_shorts" placeholder="0"></div>
+                    </div>
+                </div>
+
+                <div id="advertiser-fields" style="display:none;">
+    <label class="section-label">О бренде</label>
+    
+    <div class="form-group">
+        <label>Название компании / Бренда</label>
+        <input type="text" name="company_name" placeholder="Напр: Вкусневич">
+    </div>
+
+    <div class="form-group">
+        <label>Название продукта (для объявления)</label>
+        <input type="text" name="title" placeholder="Напр: Паштет из утки с грибами">
+    </div>
+    
+    <div class="form-group">
+        <label>Фото продукта</label>
+        <div class="file-zone" onclick="document.getElementById('id_product_image').click()">
+            <span id="file-name">Нажмите, чтобы загрузить фото</span>
+            <input type="file" name="product_image" id="id_product_image" accept="image/*" style="display:none;">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Ссылка на Wildberries</label>
+        <input type="url" name="link_wb" placeholder="https://www.wildberries.ru/...">
+    </div>
+
+    <div class="form-group">
+        <label>Ссылка на Ozon</label>
+        <input type="url" name="link_ozon" placeholder="https://www.ozon.ru/...">
+    </div>
+
+    <div class="form-group">
+        <label>Техническое задание (ТЗ) для блогера</label>
+        <textarea name="description" 
+                  placeholder="Напишите здесь требования к интеграции: что сказать, что показать..."
+                  style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 14px; resize: vertical; min-height: 120px;"></textarea>
+    </div>
+</div>
+
+                
+
+                <label class="section-label">Категории контента</label>
+                <div class="category-grid">
+                    {% for value, text in form.topics.field.choices %}
+                        <label class="cat-item">
+                            <input type="checkbox" name="topics" value="{{ value }}" onchange="renderSubTopics()">
+                            <div class="cat-btn">{{ text }}</div>
+                        </label>
+                    {% endfor %}
+                </div>
+
+                <div id="sub-area" class="sub-topics-container">
+                    <p style="font-size: 11px; font-weight: 700; color: var(--text-label); margin-bottom: 10px;">УТОЧНИТЕ НАПРАВЛЕНИЯ:</p>
+                    <div id="sub-grid" class="sub-grid"></div>
+                </div>
+
+                <div id="api-status"></div>
+                <button type="button" id="submit-handler" class="btn-submit">Зарегистрироваться</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Подгружаем карту из твоего файла constants.py (в идеале передать через JSON из Django)
+    const subTopicsMap = {
+        'education': ['История, политика, журналистика', 'Физика, астрономия, биология, химия', 'Психология и саморазвитие', 'Криминалистика', 'Иностранные языки', 'Карьера'],
+        'tech': ['Смартфоны, ноутбуки, ПК', 'Софт, программирование, ИИ', '3D-печать', 'Фото и видео', 'Ретротехника', 'VR/AR'],
+        'diy': ['Ремонт, дизайн', 'Сад, огород', 'Лепка, рисование', 'Рукоделие', 'Мыловарение', 'Кузнечное дело', 'Аквариумистика'],
+        'lifestyle': ['Влоги', 'Семья и дети', 'Путешествия', 'Подкасты', 'ASMR', 'Медитации'],
+        'business': ['Кейсы, стартапы', 'Криптовалюты', 'Недвижимость', 'Мистика (бизнес)'],
+        'entertainment': ['Гейминг', 'Кино, аниме', 'Реакции', 'Пранки', 'Юмор', 'Музыка', 'Танцы', 'Фокусы'],
+        'sport': ['Фитнес, йога', 'Трансформации', 'Охота, рыбалка', 'Экстрим'],
+        'auto': ['Обзоры машин', 'Авто-блоги', 'Тюнинг', 'Мотоциклы', 'Авиация'],
+        'food': ['Рецепты', 'Обзоры ресторанов', 'Выращивание грибов'],
+        'art': ['Стрит-арт', 'Анимация', 'Косплей', 'Мода', 'Репортажи', 'Фольклор']
+    };
+
+    let selectedSubTags = new Set();
+
+    function renderSubTopics() {
+        const checkedMain = Array.from(document.querySelectorAll('input[name="topics"]:checked')).map(el => el.value);
+        const subArea = document.getElementById('sub-area');
+        const subGrid = document.getElementById('sub-grid');
+
+        if (checkedMain.length === 0) {
+            subArea.style.display = 'none';
+            return;
+        }
+
+        subArea.style.display = 'block';
+        subGrid.innerHTML = '';
+
+        checkedMain.forEach(cat => {
+            if (subTopicsMap[cat]) {
+                subTopicsMap[cat].forEach(subName => {
+                    const tag = document.createElement('div');
+                    tag.className = `sub-tag ${selectedSubTags.has(subName) ? 'active' : ''}`;
+                    tag.innerText = subName;
+                    tag.onclick = () => {
+                        tag.classList.toggle('active');
+                        selectedSubTags.has(subName) ? selectedSubTags.delete(subName) : selectedSubTags.add(subName);
+                        document.getElementById('id_sub_topics_json').value = JSON.stringify(Array.from(selectedSubTags));
+                    };
+                    subGrid.appendChild(tag);
+                });
+            }
+        });
+    }
+
+    const roleRadios = document.querySelectorAll('.role-radio');
+    function toggleRole(v) {
+        document.getElementById('hidden-content').style.display = 'block';
+        document.getElementById('blogger-fields').style.display = v === 'blogger' ? 'block' : 'none';
+        document.getElementById('advertiser-fields').style.display = v === 'advertiser' ? 'block' : 'none';
+    }
+    roleRadios.forEach(r => r.addEventListener('change', () => toggleRole(r.value)));
+
+    document.getElementById('id_product_image')?.addEventListener('change', (e) => {
+        document.getElementById('file-name').innerText = e.target.files[0] ? e.target.files[0].name : "Файл выбран";
+    });
+
+    document.getElementById('submit-handler').addEventListener('click', async () => {
+        const role = document.querySelector('.role-radio:checked').value;
+        const submitBtn = document.getElementById('submit-handler');
+        const apiStatus = document.getElementById('api-status');
+
+        if (role === 'blogger') {
+            const channel = document.querySelector('input[name="channel_link"]');
+            if (!channel.value.includes('@')) { channel.focus(); return; }
+            
+            // Внутри submitBtn.addEventListener, в блоке для блогера:
+
+submitBtn.disabled = true;
+apiStatus.style.display = 'block';
+apiStatus.style.background = '#f1f5f9';
+
+// Функция для плавной смены текста
+const updateStatus = (text) => {
+    apiStatus.innerHTML = `⏳ <b>Проверка:</b> ${text}`;
+};
+
+try {
+    updateStatus("Связываемся с YouTube API...");
+    
+    // Имитируем небольшую задержку для визуального комфорта (опционально)
+    await new Promise(r => setTimeout(r, 600)); 
+    updateStatus("Получаем название и аватар канала...");
+
+    const res = await fetch(`/api/fetch-youtube/?url=${encodeURIComponent(channel.value)}`);
+    
+    if (!res.ok) throw new Error("Канал не найден");
+    const data = await res.json();
+
+    await new Promise(r => setTimeout(r, 500));
+    updateStatus(`Нашли канал: <b>${data.name}</b>. Считаем подписчиков...`);
+
+    await new Promise(r => setTimeout(r, 500));
+    updateStatus("Анализируем просмотры (Long и Shorts)...");
+
+    // Заполняем скрытые поля
+    document.getElementById('id_api_name').value = data.name;
+    document.getElementById('id_api_subs').value = data.subs;
+    document.getElementById('id_api_long').value = data.long_median;
+    document.getElementById('id_api_shorts').value = data.shorts_median;
+
+    await new Promise(r => setTimeout(r, 400));
+    apiStatus.style.background = "#f0fdf4";
+    apiStatus.innerHTML = "✅ <b>Готово!</b> Все данные собраны. Регистрация...";
+    
+    // Финальная отправка
+    setTimeout(() => document.getElementById('reg-form').submit(), 800);
+
+} catch(e) { 
+    apiStatus.style.background = '#fef2f2';
+    apiStatus.innerHTML = "❌ <b>Ошибка:</b> Не удалось найти канал. Проверьте @handle.";
+    submitBtn.disabled = false;
+}
+        } else {
+            document.getElementById('reg-form').submit();
+        }
+    });
+</script>
+
+</body>
+</html>

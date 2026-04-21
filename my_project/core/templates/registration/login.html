@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход</title>
+    <style>
+        body { margin: 0; font-family: 'Inter', -apple-system, sans-serif; }
+
+        .login-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f7f6;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h2 {
+            color: #333;
+            font-size: 26px;
+            margin-bottom: 10px;
+            font-weight: 600; /* Умеренная жирность по вашему запросу */
+        }
+
+        .login-header p {
+            color: #777;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+            font-size: 14px;
+        }
+
+        /* Стилизация полей Django */
+        .login-form input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .login-form input:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            background-color: #333;
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            background-color: #000;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .login-footer a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .reset-link {
+            font-weight: normal !important;
+            font-size: 13px;
+            opacity: 0.8;
+            display: block;
+            margin-top: 8px;
+        }
+
+        .error-msg {
+            background: #fff5f5;
+            color: #c53030;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+            border: 1px solid #feb2b2;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-header">
+            <h2>С возвращением!</h2>
+            <p>Войдите в личный кабинет</p>
+        </div>
+
+        {% if form.errors %}
+            <div class="error-msg">
+                Неверная почта или пароль
+            </div>
+        {% endif %}
+
+        <form method="post" class="login-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label>Почта</label>
+                {{ form.username }}
+            </div>
+
+            <div class="form-group">
+                <label>Пароль</label>
+                {{ form.password }}
+            </div>
+
+            <button type="submit" class="btn-login">Войти</button>
+        </form>
+
+        <div class="login-footer">
+            <a href="{% url 'password_reset' %}" class="reset-link">Забыли пароль?</a>
+            <div style="margin-top: 15px;">
+                Нет аккаунта? <a href="{% url 'register' %}">Создать профиль</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
